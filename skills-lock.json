@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "skills": {
+    "bevy": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy/SKILL.md",
+      "computedHash": "4ed2083d9f47f371a78bc366657253f5b28af2f8bbb4a4369610391c8447a6f5"
+    },
+    "bevy-a11y": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-a11y/SKILL.md",
+      "computedHash": "e9f2e3a88c1bb8230dd4a579ee466cda985aa8fb15fc3333882910bcb509d021"
+    },
+    "bevy-animation": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-animation/SKILL.md",
+      "computedHash": "57cc59c0412e6168a78da0785d21777793143fea58c2046d15fa4c5bb8769d15"
+    },
+    "bevy-assets": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-assets/SKILL.md",
+      "computedHash": "371f1133794a44cc2b9832d2417e28b921b6953ad9e7a89b47ba329ee9eb5d9c"
+    },
+    "bevy-audio": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-audio/SKILL.md",
+      "computedHash": "85419ecbe773a10a7d1ad92a1920d96b901dd2b3762e0cef09089ab6e03f6272"
+    },
+    "bevy-cameras": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-cameras/SKILL.md",
+      "computedHash": "d1e15385c349c945c37b427b3ffdb04f8baeacfbc06245b6d3b7eb92bb42160f"
+    },
+    "bevy-capture": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-capture/SKILL.md",
+      "computedHash": "3f0cf578d848debd0803d89226adfe1bd5dee43449f5f5971933f51dc09aa912"
+    },
+    "bevy-cargo-features": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-cargo-features/SKILL.md",
+      "computedHash": "fedb3c1efd3dafe0317426bdf9f251d1742636e85a9ff6c43c345b2c24487a64"
+    },
+    "bevy-core-concepts": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-core-concepts/SKILL.md",
+      "computedHash": "a96e5467cc0dabd62f4345ae6ee1bcf1fd7e1ef55d38c7e035f5439517b065d7"
+    },
+    "bevy-custom-assets": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-custom-assets/SKILL.md",
+      "computedHash": "ca3a9e492314733f0408287ebdbf9b27d48df02319eb242d64d88651f138c33a"
+    },
+    "bevy-diagnostics-profiling": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-diagnostics-profiling/SKILL.md",
+      "computedHash": "bf36ca27d5ca3d2a60896e7eb39edbd1808cc88d284ffd1eb0cf6fd966b58a43"
+    },
+    "bevy-ecs-components": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-ecs-components/SKILL.md",
+      "computedHash": "1f36acf87c64ee9981b3b636ed8431647bdcf9027f769297f1cf8171c6f54bd9"
+    },
+    "bevy-ecs-queries": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-ecs-queries/SKILL.md",
+      "computedHash": "92be6d4e28f5e814464167c7f1cc49fa1fe43952172d011089583f61136f9345"
+    },
+    "bevy-ecs-systems": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-ecs-systems/SKILL.md",
+      "computedHash": "04dd45d6afd063adcecb30224a9a8c1472dc6f7794e5667d8f4983e2a57e3c91"
+    },
+    "bevy-fluent": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-fluent/SKILL.md",
+      "computedHash": "d262d52398e7a11422c97481e99000b60ae8f257ef33862a524a0878e2cfaa66"
+    },
+    "bevy-input-actions": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-input-actions/SKILL.md",
+      "computedHash": "a2b39f9319c3a95003bf6383b9d03794340fc6bb911cbca3621465f881b45abc"
+    },
+    "bevy-migration-0-17-to-0-18": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-migration-0-17-to-0-18/SKILL.md",
+      "computedHash": "4dab422eeb6f43c6203122b3f116ad4001e5dfb4c68efb215bdde98c8b1cefb1"
+    },
+    "bevy-migration-0-18-to-0-19": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-migration-0-18-to-0-19/SKILL.md",
+      "computedHash": "1ee76c9a46c4faed47c65aa77c1a55e14454c1b01ab4ebe20a9469ca9c89db2d"
+    },
+    "bevy-pbr-materials": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-pbr-materials/SKILL.md",
+      "computedHash": "e309c740abda4df74584b75d1d71c722d3addd977abcbd34789f4468f999996b"
+    },
+    "bevy-physics": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-physics/SKILL.md",
+      "computedHash": "7309c08c75c4918c8f3168e0381672f67a6e7dfe33e97aa2f70af286740ca186"
+    },
+    "bevy-porting": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-porting/SKILL.md",
+      "computedHash": "bf8f3a9af321e6ed21db532c473d17baedfd3a7287356a5c0091df25a0e290f5"
+    },
+    "bevy-rendering": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-rendering/SKILL.md",
+      "computedHash": "00608802c42460f71d5bc64b1c9f679f0e0fdb0dbeda444b687429e7d550ed08"
+    },
+    "bevy-save-load": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-save-load/SKILL.md",
+      "computedHash": "0d455820d7b2adbad9250d32226059cf9968fc576e20ada3ecebbfc58c62c257"
+    },
+    "bevy-testing": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-testing/SKILL.md",
+      "computedHash": "8bf6f69808bce6fc7bbd3106e6a24e9ce875fdc98dd38b3579964c1868e2b407"
+    },
+    "bevy-ui": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-ui/SKILL.md",
+      "computedHash": "676b57de44ea788d11513859d452baab591800b28749a9756f62f81fbe153617"
+    },
+    "bevy-vfx": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-vfx/SKILL.md",
+      "computedHash": "b8956de8c02834f7587f46bb89da23f111acee13d1278d6cc8b962cc40b39d1f"
+    },
+    "bevy-voxel-data": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-voxel-data/SKILL.md",
+      "computedHash": "aa75b854c9d82321b854fddfaab772c47d6a021d49ef8bea4362d885baed9d04"
+    },
+    "bevy-voxel-pipeline": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-voxel-pipeline/SKILL.md",
+      "computedHash": "d703a136b59184b4029e5da85d15624aecc76ce2f8bdec782f050f525ec4fb1a"
+    },
+    "bevy-voxel-runtime": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-voxel-runtime/SKILL.md",
+      "computedHash": "1a8c2736f2ffc24663f9db5d43e51375823d985d452567beebfafb1b2e18fcda"
+    },
+    "bevy-wasm-webgpu": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/bevy-wasm-webgpu/SKILL.md",
+      "computedHash": "d11d13c4dfb50fd8ee0c39355ca5fbd7f8db251c3fefa159fd434d2af9833fd0"
+    },
+    "similarity-rs": {
+      "source": "chrisgliddon/bevy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/similarity-rs/SKILL.md",
+      "computedHash": "92c02be164d6b24d06b74e56897cc474262e91ddfe9cf724e5be3af90ce24666"
+    }
+  }
+}

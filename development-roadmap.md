@@ -23,9 +23,9 @@
 ## Phase 2 — Fishing Modifiers
 
 - [x] Normal
-- [ ] Hidden
-- [ ] Forbidden
-- [ ] Reverse
+- [x] Hidden
+- [x] Forbidden
+- [x] Reverse
 - [ ] Test modifier combinations
 
 ## Phase 3 — Fish System

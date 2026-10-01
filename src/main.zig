@@ -14,6 +14,13 @@ const Direction = enum {
     right,
 };
 
+const Modifier = enum {
+    normal,
+    hidden,
+    forbidden,
+    reverse,
+};
+
 pub fn main() void {
     rl.initWindow(960, 540, "My Life Fishing Simulator");
     defer rl.closeWindow();
@@ -32,19 +39,8 @@ pub fn main() void {
         .height = 320,
     };
 
-    const directions = [_]Direction{
-        Direction.left,
-        Direction.up,
-        Direction.right,
-        Direction.down,
-    };
-
     //  randomize arrow sequence
-    var arrow_sequence: [4]Direction = undefined;
-    for (&arrow_sequence) |*direction| {
-        const random_index: usize = @intCast(rl.getRandomValue(0, 3));
-        direction.* = directions[random_index];
-    }
+    var arrow_sequence = randomArrowSequence();
 
     var arrow_index: usize = 0;
     const arrow_duration: f32 = 3.0;
@@ -52,6 +48,14 @@ pub fn main() void {
     var misses: i32 = 0;
     const total_rounds: i32 = 3;
     var current_round: i32 = 1;
+    const hidden_chance_percent: i32 = 25;
+    const forbidden_chance_percent: i32 = 25;
+    const reverse_chance_percent: i32 = 25;
+    var hidden_positions = randomMarkedPositions();
+    var forbidden_positions = randomMarkedPositions();
+    var reverse_positions = randomMarkedPositions();
+
+    var round_modifier = chooseModifier(hidden_chance_percent, forbidden_chance_percent, reverse_chance_percent);
 
     while (!rl.windowShouldClose()) {
         // update game state
@@ -66,46 +70,80 @@ pub fn main() void {
             },
             GameState.arrows => {
                 arrow_timer += rl.getFrameTime();
+                var missed_this_frame = false;
+                var start_new_sequence = false;
 
                 if (arrow_timer >= arrow_duration) {
-                    misses += 1;
-                    arrow_timer = 0.0;
-                    arrow_index = 0;
-                    game_state = .waiting;
+                    missed_this_frame = true;
+                    game_state = GameState.waiting;
                 } else {
-                    const expected_direction = arrow_sequence[arrow_index];
+                    while (round_modifier == Modifier.forbidden and
+                        arrow_index < arrow_sequence.len and
+                        forbidden_positions[arrow_index])
+                    {
+                        arrow_index += 1;
+                    }
 
-                    const expected_key: rl.KeyboardKey = switch (expected_direction) {
-                        Direction.left => rl.KeyboardKey.left,
-                        Direction.up => rl.KeyboardKey.up,
-                        Direction.right => rl.KeyboardKey.right,
-                        Direction.down => rl.KeyboardKey.down,
-                    };
+                    if (arrow_index < arrow_sequence.len) {
+                        const expected_direction = arrow_sequence[arrow_index];
 
-                    const pressed_key = rl.getKeyPressed();
-                    switch (pressed_key) {
-                        rl.KeyboardKey.left, rl.KeyboardKey.up, rl.KeyboardKey.right, rl.KeyboardKey.down => {
-                            if (pressed_key == expected_key) {
-                                arrow_index += 1;
+                        const is_reversed = round_modifier == Modifier.reverse and reverse_positions[arrow_index];
 
-                                if (arrow_index == arrow_sequence.len) {
-                                    arrow_index = 0;
-                                    arrow_timer = 0.0;
-                                    if (current_round < total_rounds) {
-                                        current_round += 1;
-                                    } else {
-                                        game_state = GameState.caught;
-                                    }
+                        const expected_key: rl.KeyboardKey =
+                            if (is_reversed)
+                                switch (expected_direction) {
+                                    Direction.left => rl.KeyboardKey.right,
+                                    Direction.right => rl.KeyboardKey.left,
+                                    Direction.up => rl.KeyboardKey.down,
+                                    Direction.down => rl.KeyboardKey.up,
                                 }
-                            } else {
-                                misses += 1;
-                            }
-                        },
-                        else => {},
+                            else switch (expected_direction) {
+                                Direction.left => rl.KeyboardKey.left,
+                                Direction.right => rl.KeyboardKey.right,
+                                Direction.up => rl.KeyboardKey.up,
+                                Direction.down => rl.KeyboardKey.down,
+                            };
+
+                        const pressed_key = rl.getKeyPressed();
+                        switch (pressed_key) {
+                            rl.KeyboardKey.left, rl.KeyboardKey.up, rl.KeyboardKey.right, rl.KeyboardKey.down => {
+                                if (pressed_key == expected_key) {
+                                    arrow_index += 1;
+                                } else {
+                                    missed_this_frame = true;
+                                }
+                            },
+                            else => {},
+                        }
+                    }
+
+                    if (arrow_index == arrow_sequence.len) {
+                        if (current_round < total_rounds) {
+                            current_round += 1;
+                            round_modifier = chooseModifier(hidden_chance_percent, forbidden_chance_percent, reverse_chance_percent);
+                            start_new_sequence = true;
+                        } else {
+                            game_state = GameState.caught;
+                        }
                     }
                 }
-                if (misses >= max_misses) {
-                    game_state = GameState.escaped;
+
+                if (missed_this_frame) {
+                    misses += 1;
+                    if (misses >= max_misses) {
+                        game_state = GameState.escaped;
+                    } else {
+                        start_new_sequence = true;
+                    }
+                }
+
+                if (start_new_sequence) {
+                    arrow_index = 0;
+                    arrow_timer = 0.0;
+                    arrow_sequence = randomArrowSequence();
+                    hidden_positions = randomMarkedPositions();
+                    forbidden_positions = randomMarkedPositions();
+                    reverse_positions = randomMarkedPositions();
                 }
             },
             GameState.caught, GameState.escaped => {},
@@ -139,12 +177,37 @@ pub fn main() void {
                 );
 
                 for (arrow_sequence, 0..) |direction, index| {
-                    const symbol: [:0]const u8 = switch (direction) {
-                        Direction.left => "<",
-                        Direction.up => "^",
-                        Direction.right => ">",
-                        Direction.down => "v",
-                    };
+                    const hide_arrow =
+                        round_modifier == Modifier.hidden and
+                        arrow_timer >= 1.0 and
+                        hidden_positions[index];
+
+                    const forbid_arrow =
+                        round_modifier == Modifier.forbidden and
+                        forbidden_positions[index];
+
+                    const reverse_arrow =
+                        round_modifier == Modifier.reverse and
+                        reverse_positions[index];
+
+                    const symbol: [:0]const u8 =
+                        if (forbid_arrow)
+                            "X"
+                        else if (hide_arrow)
+                            "?"
+                        else if (reverse_arrow)
+                            switch (direction) {
+                                Direction.left => "<!",
+                                Direction.up => "^!",
+                                Direction.right => ">!",
+                                Direction.down => "v!",
+                            }
+                        else switch (direction) {
+                            Direction.left => "<",
+                            Direction.up => "^",
+                            Direction.right => ">",
+                            Direction.down => "v",
+                        };
 
                     const x: i32 = 365 + @as(i32, @intCast(index)) * 70;
 
@@ -167,4 +230,45 @@ pub fn main() void {
             GameState.escaped => rl.drawText("Fish escaped!", 370, 80, 28, .red),
         }
     }
+}
+
+fn chooseModifier(hidden_chance: i32, forbidden_chance: i32, reverse_chance: i32) Modifier {
+    const roll = rl.getRandomValue(1, 100);
+
+    if (roll <= hidden_chance) return Modifier.hidden;
+    if (roll <= hidden_chance + forbidden_chance) return Modifier.forbidden;
+    if (roll <= hidden_chance + forbidden_chance + reverse_chance) return Modifier.reverse;
+    return Modifier.normal;
+}
+
+fn randomArrowSequence() [4]Direction {
+    var sequence = [_]Direction{ Direction.left, Direction.up, Direction.right, Direction.down };
+
+    for (0..sequence.len) |index| {
+        const random_index: usize = @intCast(
+            rl.getRandomValue(@intCast(index), 3),
+        );
+        const temp = sequence[index];
+        sequence[index] = sequence[random_index];
+        sequence[random_index] = temp;
+    }
+
+    return sequence;
+}
+
+fn randomMarkedPositions() [4]bool {
+    var positions = [_]bool{false} ** 4;
+    const count = rl.getRandomValue(1, 2);
+    var selected: i32 = 0;
+
+    while (selected < count) {
+        const index: usize = @intCast(rl.getRandomValue(0, 3));
+
+        if (!positions[index]) {
+            positions[index] = true;
+            selected += 1;
+        }
+    }
+
+    return positions;
 }

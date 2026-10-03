@@ -50,13 +50,14 @@
 
 ## Phase 5 — Top-down Exploration
 
-- [ ] Player movement
-- [ ] Player animation
-- [ ] Camera
-- [ ] Collision
+- [x] Player movement
+- [x] Player animation
+- [x] Camera
 - [ ] Test map
+- [ ] Collision (map edges and water)
 - [ ] Fishing spots
 - [ ] Interaction system
+- [ ] Allow casting only at a fishing spot
 
 ## Phase 6 — Core Gameplay Loop
 

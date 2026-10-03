@@ -81,9 +81,12 @@ const catfish = Fish{
     .hidden_chance_percent = 0,
 };
 
-pub fn main() void {
+pub fn main() !void {
     rl.initWindow(960, 540, "My Life Fishing Simulator");
     defer rl.closeWindow();
+
+    const player_texture = try rl.loadTexture("assets/sprites/angler-walk.png");
+    defer rl.unloadTexture(player_texture);
 
     rl.setTargetFPS(60);
 
@@ -101,7 +104,17 @@ pub fn main() void {
         .height = 32,
     };
 
+    var camera = rl.Camera2D{
+        .offset = .{ .x = 480, .y = 270 },
+        .target = .{ .x = player.x, .y = player.y },
+        .rotation = 0,
+        .zoom = 1,
+    };
+
     const player_speed: f32 = 180.0;
+    var facing: Direction = .down;
+    var walk_frame: usize = 0;
+    var walk_timer: f32 = 0.0;
 
     //  randomize arrow sequence
     var arrow_sequence = randomArrowSequence();
@@ -131,15 +144,34 @@ pub fn main() void {
     var round_modifier = chooseModifier(hidden_chance_percent, forbidden_chance_percent, reverse_chance_percent);
 
     while (!rl.windowShouldClose()) {
+        var walking = false;
+
         // update game state
         switch (game_state) {
             GameState.idle => {
                 const distance = player_speed * rl.getFrameTime();
+                walking =
+                    rl.isKeyDown(rl.KeyboardKey.w) or
+                    rl.isKeyDown(rl.KeyboardKey.s) or
+                    rl.isKeyDown(rl.KeyboardKey.a) or
+                    rl.isKeyDown(rl.KeyboardKey.d);
 
-                if (rl.isKeyDown(rl.KeyboardKey.w)) player.y -= distance;
-                if (rl.isKeyDown(rl.KeyboardKey.s)) player.y += distance;
-                if (rl.isKeyDown(rl.KeyboardKey.a)) player.x -= distance;
-                if (rl.isKeyDown(rl.KeyboardKey.d)) player.x += distance;
+                if (rl.isKeyDown(rl.KeyboardKey.w)) {
+                    player.y -= distance;
+                    facing = .up;
+                }
+                if (rl.isKeyDown(rl.KeyboardKey.s)) {
+                    player.y += distance;
+                    facing = .down;
+                }
+                if (rl.isKeyDown(rl.KeyboardKey.a)) {
+                    player.x -= distance;
+                    facing = .left;
+                }
+                if (rl.isKeyDown(rl.KeyboardKey.d)) {
+                    player.x += distance;
+                    facing = .right;
+                }
 
                 if (rl.isKeyPressed(rl.KeyboardKey.space)) {
                     game_state = GameState.casting;
@@ -278,12 +310,63 @@ pub fn main() void {
             },
         }
 
-        rl.beginDrawing();
-        defer rl.endDrawing();
+        if (walking) {
+            if (walk_frame == 0) walk_frame = 1;
+            walk_timer += rl.getFrameTime();
+            if (walk_timer >= 0.15) {
+                walk_timer -= 0.15;
+                walk_frame = if (walk_frame == 8) 1 else walk_frame + 1;
+            }
+        } else {
+            walk_timer = 0.0;
+            walk_frame = 0;
+        }
 
+        camera.target = .{
+            .x = player.x + player.width / 2,
+            .y = player.y + player.height / 2,
+        };
+
+        rl.beginDrawing();
         rl.clearBackground(rl.Color.ray_white);
+
+        rl.beginMode2D(camera);
         rl.drawRectangleRec(water, rl.Color.sky_blue);
-        rl.drawRectangleRec(player, .brown);
+
+        const column: f32 = switch (facing) {
+            Direction.down => 0,
+            Direction.left => 1,
+            Direction.right => 2,
+            Direction.up => 3,
+        };
+
+        const frame_width: f32 = 64.0;
+        const frame_height: f32 = 64.0;
+
+        const source = rl.Rectangle{
+            .x = column * frame_width,
+            .y = @as(f32, @floatFromInt(walk_frame)) * frame_height,
+            .width = frame_width,
+            .height = frame_height,
+        };
+
+        const destination = rl.Rectangle{
+            .x = @round(player.x - 24),
+            .y = @round(player.y - 58),
+            .width = 72,
+            .height = 96,
+        };
+
+        rl.drawTexturePro(
+            player_texture,
+            source,
+            destination,
+            .{ .x = 0, .y = 0 },
+            0,
+            .white,
+        );
+
+        rl.endMode2D();
 
         // draw game state
         switch (game_state) {
@@ -387,6 +470,8 @@ pub fn main() void {
                 rl.drawText("Press Space to fish again", 300, 140, 24, .dark_gray);
             },
         }
+
+        rl.endDrawing();
     }
 }
 

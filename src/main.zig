@@ -1,7 +1,10 @@
 const rl = @import("raylib");
 
 const GameState = enum {
+    idle,
+    casting,
     waiting,
+    bite,
     arrows,
     caught,
     escaped,
@@ -21,16 +24,68 @@ const Modifier = enum {
     reverse,
 };
 
+const Behavior = enum {
+    calm,
+    burst,
+    heavy,
+    erratic,
+};
+
+const Rarity = enum {
+    common,
+    uncommon,
+    rare,
+    epic,
+    legendary,
+};
+
+const Fish = struct {
+    name: [:0]const u8,
+    rarity: Rarity,
+    behavior: Behavior,
+    rounds: i32,
+    time_limit: f32,
+    arrow_count: usize,
+    hidden_chance_percent: i32,
+    forbidden_chance_percent: i32 = 0,
+    reverse_chance_percent: i32 = 0,
+};
+
+const bluegill = Fish{
+    .name = "Bluegill",
+    .rarity = Rarity.common,
+    .behavior = Behavior.calm,
+    .rounds = 2,
+    .arrow_count = 3,
+    .time_limit = 3.0,
+    .hidden_chance_percent = 0,
+};
+
+const carp = Fish{
+    .name = "Carp",
+    .rarity = Rarity.uncommon,
+    .behavior = Behavior.burst,
+    .rounds = 3,
+    .arrow_count = 4,
+    .time_limit = 3.0,
+    .hidden_chance_percent = 30,
+};
+
+const catfish = Fish{
+    .name = "Catfish",
+    .rarity = Rarity.uncommon,
+    .behavior = Behavior.heavy,
+    .rounds = 5,
+    .arrow_count = 4,
+    .time_limit = 3.5,
+    .hidden_chance_percent = 0,
+};
+
 pub fn main() void {
     rl.initWindow(960, 540, "My Life Fishing Simulator");
     defer rl.closeWindow();
 
     rl.setTargetFPS(60);
-
-    var game_state: GameState = GameState.waiting;
-    var wait_timer: f32 = 0.0;
-    const wait_duration: f32 = 2.0;
-    const max_misses: i32 = 3;
 
     const water = rl.Rectangle{
         .x = 0,
@@ -39,33 +94,93 @@ pub fn main() void {
         .height = 320,
     };
 
+    var player = rl.Rectangle{
+        .x = 480,
+        .y = 150,
+        .width = 24,
+        .height = 32,
+    };
+
+    const player_speed: f32 = 180.0;
+
     //  randomize arrow sequence
     var arrow_sequence = randomArrowSequence();
 
+    var game_state: GameState = GameState.idle;
+    var wait_timer: f32 = 0.0;
+    var wait_duration: f32 = 2.0;
+    var bite_timer: f32 = 0.0;
+    const bite_duration: f32 = 0.8;
+    const max_misses: i32 = 3;
     var arrow_index: usize = 0;
-    const arrow_duration: f32 = 3.0;
     var arrow_timer: f32 = 0.0;
     var misses: i32 = 0;
-    const total_rounds: i32 = 3;
     var current_round: i32 = 1;
-    const hidden_chance_percent: i32 = 25;
-    const forbidden_chance_percent: i32 = 25;
-    const reverse_chance_percent: i32 = 25;
+    var cast_timer: f32 = 0.0;
+    const cast_duration: f32 = 0.5;
     var hidden_positions = randomMarkedPositions();
     var forbidden_positions = randomMarkedPositions();
     var reverse_positions = randomMarkedPositions();
 
+    const fish = catfish;
+    var arrow_duration: f32 = fish.time_limit;
+    const total_rounds: i32 = fish.rounds;
+    const hidden_chance_percent: i32 = fish.hidden_chance_percent;
+    const forbidden_chance_percent: i32 = fish.forbidden_chance_percent;
+    const reverse_chance_percent: i32 = fish.reverse_chance_percent;
     var round_modifier = chooseModifier(hidden_chance_percent, forbidden_chance_percent, reverse_chance_percent);
 
     while (!rl.windowShouldClose()) {
         // update game state
         switch (game_state) {
+            GameState.idle => {
+                const distance = player_speed * rl.getFrameTime();
+
+                if (rl.isKeyDown(rl.KeyboardKey.w)) player.y -= distance;
+                if (rl.isKeyDown(rl.KeyboardKey.s)) player.y += distance;
+                if (rl.isKeyDown(rl.KeyboardKey.a)) player.x -= distance;
+                if (rl.isKeyDown(rl.KeyboardKey.d)) player.x += distance;
+
+                if (rl.isKeyPressed(rl.KeyboardKey.space)) {
+                    game_state = GameState.casting;
+                    cast_timer = 0.0;
+                }
+            },
+            GameState.casting => {
+                cast_timer += rl.getFrameTime();
+                if (cast_timer >= cast_duration) {
+                    wait_duration = @floatFromInt(rl.getRandomValue(2, 4));
+                    wait_timer = 0.0;
+                    game_state = GameState.waiting;
+                }
+            },
             GameState.waiting => {
                 wait_timer += rl.getFrameTime();
                 if (wait_timer >= wait_duration) {
-                    game_state = GameState.arrows;
-                    wait_timer = 0.0;
+                    game_state = GameState.bite;
+                    bite_timer = 0.0;
+                }
+            },
+            GameState.bite => {
+                bite_timer += rl.getFrameTime();
+                if (bite_timer >= bite_duration) {
+                    current_round = 1;
+                    misses = 0;
+                    arrow_index = 0;
                     arrow_timer = 0.0;
+                    arrow_duration = fish.time_limit;
+
+                    arrow_sequence = randomArrowSequence();
+                    hidden_positions = randomMarkedPositions();
+                    forbidden_positions = randomMarkedPositions();
+                    reverse_positions = randomMarkedPositions();
+                    round_modifier = chooseModifier(
+                        hidden_chance_percent,
+                        forbidden_chance_percent,
+                        reverse_chance_percent,
+                    );
+
+                    game_state = GameState.arrows;
                 }
             },
             GameState.arrows => {
@@ -75,16 +190,15 @@ pub fn main() void {
 
                 if (arrow_timer >= arrow_duration) {
                     missed_this_frame = true;
-                    game_state = GameState.waiting;
                 } else {
                     while (round_modifier == Modifier.forbidden and
-                        arrow_index < arrow_sequence.len and
+                        arrow_index < fish.arrow_count and
                         forbidden_positions[arrow_index])
                     {
                         arrow_index += 1;
                     }
 
-                    if (arrow_index < arrow_sequence.len) {
+                    if (arrow_index < fish.arrow_count) {
                         const expected_direction = arrow_sequence[arrow_index];
 
                         const is_reversed = round_modifier == Modifier.reverse and reverse_positions[arrow_index];
@@ -117,9 +231,15 @@ pub fn main() void {
                         }
                     }
 
-                    if (arrow_index == arrow_sequence.len) {
+                    if (arrow_index == fish.arrow_count) {
                         if (current_round < total_rounds) {
                             current_round += 1;
+                            if (fish.behavior == Behavior.burst) {
+                                arrow_duration = if (current_round == 2)
+                                    fish.time_limit * 0.7
+                                else
+                                    fish.time_limit * 1.3;
+                            }
                             round_modifier = chooseModifier(hidden_chance_percent, forbidden_chance_percent, reverse_chance_percent);
                             start_new_sequence = true;
                         } else {
@@ -146,7 +266,16 @@ pub fn main() void {
                     reverse_positions = randomMarkedPositions();
                 }
             },
-            GameState.caught, GameState.escaped => {},
+            GameState.caught => {
+                if (rl.isKeyPressed(rl.KeyboardKey.space)) {
+                    game_state = GameState.idle;
+                }
+            },
+            GameState.escaped => {
+                if (rl.isKeyPressed(rl.KeyboardKey.space)) {
+                    game_state = GameState.idle;
+                }
+            },
         }
 
         rl.beginDrawing();
@@ -154,9 +283,31 @@ pub fn main() void {
 
         rl.clearBackground(rl.Color.ray_white);
         rl.drawRectangleRec(water, rl.Color.sky_blue);
+        rl.drawRectangleRec(player, .brown);
 
         // draw game state
         switch (game_state) {
+            GameState.idle => rl.drawText(
+                "Press Space to fish",
+                320,
+                80,
+                28,
+                .dark_gray,
+            ),
+            GameState.casting => rl.drawText(
+                "Casting...",
+                390,
+                80,
+                28,
+                .dark_gray,
+            ),
+            GameState.bite => rl.drawText(
+                "BITE!",
+                420,
+                80,
+                36,
+                .red,
+            ),
             GameState.waiting => rl.drawText(
                 "Waiting for a fish...",
                 320,
@@ -175,8 +326,7 @@ pub fn main() void {
                     28,
                     .dark_green,
                 );
-
-                for (arrow_sequence, 0..) |direction, index| {
+                for (arrow_sequence[0..fish.arrow_count], 0..) |direction, index| {
                     const hide_arrow =
                         round_modifier == Modifier.hidden and
                         arrow_timer >= 1.0 and
@@ -222,12 +372,20 @@ pub fn main() void {
 
                 rl.drawRectangle(280, 210, 400, 24, .light_gray);
                 rl.drawRectangle(280, 210, bar_width, 24, .green);
+                rl.drawText(fish.name, 30, 70, 24, .dark_gray);
                 if (misses > 0) {
                     rl.drawText("Miss!", 30, 30, 24, .red);
                 }
             },
-            GameState.caught => rl.drawText("Fish caught!", 380, 80, 28, .gold),
-            GameState.escaped => rl.drawText("Fish escaped!", 370, 80, 28, .red),
+            GameState.caught => {
+                rl.drawText("Fish caught!", 380, 80, 28, .gold);
+                rl.drawText(fish.name, 380, 120, 24, .dark_gray);
+                rl.drawText("Press Space to fish again", 300, 170, 24, .dark_gray);
+            },
+            GameState.escaped => {
+                rl.drawText("Fish escaped!", 370, 80, 28, .red);
+                rl.drawText("Press Space to fish again", 300, 140, 24, .dark_gray);
+            },
         }
     }
 }

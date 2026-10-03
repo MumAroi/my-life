@@ -26,27 +26,27 @@
 - [x] Hidden
 - [x] Forbidden
 - [x] Reverse
-- [ ] Test modifier combinations
+- [x] Test modifier combinations
 
 ## Phase 3 — Fish System
 
-- [ ] Fish data model
-- [ ] Rarity
-- [ ] Behavior
-- [ ] Bluegill
-- [ ] Carp
-- [ ] Catfish
-- [ ] Difficulty configuration
+- [x] Fish data model
+- [x] Rarity
+- [x] Behavior
+- [x] Bluegill
+- [x] Carp
+- [x] Catfish
+- [x] Difficulty configuration
 
 ## Phase 4 — Fishing System
 
-- [ ] Fishing state machine
-- [ ] Casting
-- [ ] Waiting
-- [ ] Fish bite
-- [ ] Start fishing battle
-- [ ] Catch
-- [ ] Escape
+- [x] Fishing state machine
+- [x] Casting
+- [x] Waiting
+- [x] Fish bite
+- [x] Start fishing battle
+- [x] Catch
+- [x] Escape
 
 ## Phase 5 — Top-down Exploration
 

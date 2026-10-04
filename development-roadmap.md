@@ -53,7 +53,7 @@
 - [x] Player movement
 - [x] Player animation
 - [x] Camera
-- [ ] Test map
+- [x] Test map
 - [ ] Collision (map edges and water)
 - [ ] Fishing spots
 - [ ] Interaction system

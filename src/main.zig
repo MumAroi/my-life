@@ -17,6 +17,17 @@ const Direction = enum {
     right,
 };
 
+const Facing = enum {
+    down,
+    down_right,
+    right,
+    up_right,
+    up,
+    up_left,
+    left,
+    down_left,
+};
+
 const Modifier = enum {
     normal,
     hidden,
@@ -82,20 +93,25 @@ const catfish = Fish{
 };
 
 pub fn main() !void {
-    rl.initWindow(960, 540, "My Life Fishing Simulator");
+    rl.setConfigFlags(.{ .window_resizable = true });
+    rl.initWindow(1280, 720, "My Life Fishing Simulator");
     defer rl.closeWindow();
 
-    const player_texture = try rl.loadTexture("assets/sprites/angler-walk.png");
+    const player_texture = try rl.loadTexture("assets/sprites/angler-ayutthaya-actions.png");
     defer rl.unloadTexture(player_texture);
+    rl.setTextureFilter(player_texture, .point);
+
+    const walk_texture = try rl.loadTexture("assets/sprites/angler-walk-arm-swing-rigid.png");
+    defer rl.unloadTexture(walk_texture);
+    rl.setTextureFilter(walk_texture, .point);
+
+    const map_texture = try rl.loadTexture("assets/maps/grass-pier-style.png");
+    defer rl.unloadTexture(map_texture);
+    rl.setTextureFilter(map_texture, .point);
+    const map_width: f32 = @as(f32, @floatFromInt(map_texture.width));
+    const map_height: f32 = @as(f32, @floatFromInt(map_texture.height));
 
     rl.setTargetFPS(60);
-
-    const water = rl.Rectangle{
-        .x = 0,
-        .y = 220,
-        .width = 960,
-        .height = 320,
-    };
 
     var player = rl.Rectangle{
         .x = 480,
@@ -105,14 +121,21 @@ pub fn main() !void {
     };
 
     var camera = rl.Camera2D{
-        .offset = .{ .x = 480, .y = 270 },
+        .offset = .{ .x = 640, .y = 360 },
         .target = .{ .x = player.x, .y = player.y },
         .rotation = 0,
-        .zoom = 1,
+        .zoom = 2,
+    };
+
+    var ui_camera = rl.Camera2D{
+        .offset = .{ .x = 0, .y = 0 },
+        .target = .{ .x = 0, .y = 0 },
+        .rotation = 0,
+        .zoom = 4.0 / 3.0,
     };
 
     const player_speed: f32 = 180.0;
-    var facing: Direction = .down;
+    var facing: Facing = .down;
     var walk_frame: usize = 0;
     var walk_timer: f32 = 0.0;
 
@@ -150,27 +173,24 @@ pub fn main() !void {
         switch (game_state) {
             GameState.idle => {
                 const distance = player_speed * rl.getFrameTime();
-                walking =
-                    rl.isKeyDown(rl.KeyboardKey.w) or
-                    rl.isKeyDown(rl.KeyboardKey.s) or
-                    rl.isKeyDown(rl.KeyboardKey.a) or
-                    rl.isKeyDown(rl.KeyboardKey.d);
+                var move_x: f32 = 0;
+                var move_y: f32 = 0;
+                if (rl.isKeyDown(.a)) move_x -= 1;
+                if (rl.isKeyDown(.d)) move_x += 1;
+                if (rl.isKeyDown(.w)) move_y -= 1;
+                if (rl.isKeyDown(.s)) move_y += 1;
 
-                if (rl.isKeyDown(rl.KeyboardKey.w)) {
-                    player.y -= distance;
-                    facing = .up;
-                }
-                if (rl.isKeyDown(rl.KeyboardKey.s)) {
-                    player.y += distance;
-                    facing = .down;
-                }
-                if (rl.isKeyDown(rl.KeyboardKey.a)) {
-                    player.x -= distance;
-                    facing = .left;
-                }
-                if (rl.isKeyDown(rl.KeyboardKey.d)) {
-                    player.x += distance;
-                    facing = .right;
+                walking = move_x != 0 or move_y != 0;
+                if (walking) {
+                    facing = if (move_y < 0)
+                        (if (move_x < 0) .up_left else if (move_x > 0) .up_right else .up)
+                    else if (move_y > 0)
+                        (if (move_x < 0) .down_left else if (move_x > 0) .down_right else .down)
+                    else if (move_x < 0) .left else .right;
+
+                    const speed_scale: f32 = if (move_x != 0 and move_y != 0) 0.70710677 else 1;
+                    player.x += move_x * distance * speed_scale;
+                    player.y += move_y * distance * speed_scale;
                 }
 
                 if (rl.isKeyPressed(rl.KeyboardKey.space)) {
@@ -310,6 +330,9 @@ pub fn main() !void {
             },
         }
 
+        player.x = @max(0, @min(player.x, map_width - player.width));
+        player.y = @max(0, @min(player.y, map_height - player.height));
+
         if (walking) {
             if (walk_frame == 0) walk_frame = 1;
             walk_timer += rl.getFrameTime();
@@ -322,43 +345,59 @@ pub fn main() !void {
             walk_frame = 0;
         }
 
+        const screen_width: f32 = @floatFromInt(rl.getScreenWidth());
+        const screen_height: f32 = @floatFromInt(rl.getScreenHeight());
+        const half_view_width = screen_width / (2 * camera.zoom);
+        const half_view_height = screen_height / (2 * camera.zoom);
+        camera.offset = .{ .x = screen_width / 2, .y = screen_height / 2 };
         camera.target = .{
-            .x = player.x + player.width / 2,
-            .y = player.y + player.height / 2,
+            .x = @max(half_view_width, @min(player.x + player.width / 2, map_width - half_view_width)),
+            .y = @max(half_view_height, @min(player.y + player.height / 2, map_height - half_view_height)),
         };
+        ui_camera.zoom = @min(screen_width / 960, screen_height / 540);
 
         rl.beginDrawing();
         rl.clearBackground(rl.Color.ray_white);
 
         rl.beginMode2D(camera);
-        rl.drawRectangleRec(water, rl.Color.sky_blue);
+        rl.drawTextureEx(map_texture, .{ .x = 0, .y = 0 }, 0, 1, .white);
 
         const column: f32 = switch (facing) {
-            Direction.down => 0,
-            Direction.left => 1,
-            Direction.right => 2,
-            Direction.up => 3,
+            .down, .down_left, .down_right => 0,
+            .left => 1,
+            .right => 2,
+            .up, .up_left, .up_right => 3,
         };
 
-        const frame_width: f32 = 64.0;
-        const frame_height: f32 = 64.0;
+        const frame_width: f32 = 256.0;
+        const frame_height: f32 = 256.0;
 
+        const sprite_row: f32 = switch (game_state) {
+            .idle => 0,
+            .casting => 1,
+            .waiting => 2,
+            .bite, .arrows => 3,
+            .caught => 4,
+            .escaped => 0,
+        };
+
+        const is_walk_sprite = game_state == .idle and walking;
         const source = rl.Rectangle{
-            .x = column * frame_width,
-            .y = @as(f32, @floatFromInt(walk_frame)) * frame_height,
+            .x = if (is_walk_sprite) @as(f32, @floatFromInt(walk_frame - 1)) * frame_width else column * frame_width,
+            .y = if (is_walk_sprite) @as(f32, @floatFromInt(@intFromEnum(facing))) * frame_height else sprite_row * frame_height,
             .width = frame_width,
             .height = frame_height,
         };
 
         const destination = rl.Rectangle{
-            .x = @round(player.x - 24),
-            .y = @round(player.y - 58),
-            .width = 72,
-            .height = 96,
+            .x = @round(player.x - 34),
+            .y = @round(player.y - 42),
+            .width = 92,
+            .height = 92,
         };
 
         rl.drawTexturePro(
-            player_texture,
+            if (is_walk_sprite) walk_texture else player_texture,
             source,
             destination,
             .{ .x = 0, .y = 0 },
@@ -369,6 +408,7 @@ pub fn main() !void {
         rl.endMode2D();
 
         // draw game state
+        rl.beginMode2D(ui_camera);
         switch (game_state) {
             GameState.idle => rl.drawText(
                 "Press Space to fish",
@@ -470,6 +510,7 @@ pub fn main() !void {
                 rl.drawText("Press Space to fish again", 300, 140, 24, .dark_gray);
             },
         }
+        rl.endMode2D();
 
         rl.endDrawing();
     }
